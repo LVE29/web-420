@@ -1,2 +1,6 @@
-# web-420
-Repository for WEB 420 RESTful APIs
+# WEB 420 RESTful APIs
+
+## Contributors
+
+- Richard Krasso
+- Leslie Espino
