@@ -1,6 +1,6 @@
 /*
   Leslie Espino
-  Assignment 4.2 - Developing a JSON Web Service
+  Assignment 5.2 - Manipulating Data in Your Web Service, Part I
   app.js
   In-N-Out-Books JSON Web Service
 */
@@ -73,6 +73,45 @@ app.get("/api/books/:id", async (req, res, next) => {
     }
 
     res.json(book);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/*******************************************************
+ * Adds a new book to the collection.
+ * A title is required before the book can be added.
+ *******************************************************/
+app.post("/api/books", async (req, res, next) => {
+  try {
+    const newBook = req.body;
+
+    if (!newBook.title) {
+      return next(createError(400, "Book title is required"));
+    }
+
+    const result = await books.insertOne(newBook);
+
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/*******************************************************
+ * Deletes a book from the collection by its ID.
+ *******************************************************/
+app.delete("/api/books/:id", async (req, res, next) => {
+  try {
+    const bookId = parseInt(req.params.id);
+
+    if (isNaN(bookId)) {
+      return next(createError(400, "Book ID must be a number"));
+    }
+
+    await books.deleteOne({ id: bookId });
+
+    res.status(204).send();
   } catch (err) {
     next(err);
   }
