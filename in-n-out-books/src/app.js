@@ -1,7 +1,6 @@
 /*
   Leslie Espino
-  Assignment 5.2 - Manipulating Data in Your Web Service, Part I
-  app.js
+  Assignment 6.2 - Manipulating Data in Your Web Service, Part II
   In-N-Out-Books JSON Web Service
 */
 
@@ -93,6 +92,33 @@ app.post("/api/books", async (req, res, next) => {
     const result = await books.insertOne(newBook);
 
     res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/*******************************************************
+ * Updates an existing book by its ID.
+ * Validating the ID and title prevents invalid data from
+ * being sent to the mock database.
+ *******************************************************/
+app.put("/api/books/:id", async (req, res, next) => {
+  try {
+    const bookId = parseInt(req.params.id);
+
+    if (isNaN(bookId)) {
+      return next(createError(400, "Input must be a number"));
+    }
+
+    const bookToUpdate = req.body;
+
+    if (!bookToUpdate.title) {
+      return next(createError(400, "Bad Request"));
+    }
+
+    await books.updateOne({ id: bookId }, bookToUpdate);
+
+    res.status(204).send();
   } catch (err) {
     next(err);
   }

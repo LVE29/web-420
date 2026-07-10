@@ -1,6 +1,6 @@
 /*
   Leslie Espino
-  Assignment 5.2 - Manipulating Data in Your Web Service, Part I
+ Assignment 6.2 - Manipulating Data in Your Web Service, Part II
   app.spec.js
   Tests for the In-N-Out-Books API routes
 */
@@ -8,7 +8,7 @@
 const request = require("supertest");
 const app = require("../src/app");
 
-describe("Assignment 5.2 API Tests", () => {
+describe("Chapter 5: API Tests", () => {
   test("Should return an array of books", async () => {
     const response = await request(app).get("/api/books");
 
@@ -66,6 +66,40 @@ describe("Assignment 5.2 API Tests", () => {
     expect(response.body).toHaveProperty("type", "error");
     expect(response.body).toHaveProperty("status", 400);
     expect(response.body).toHaveProperty("message", "Book title is required");
+  });
+
+  test("Should update a book and return a 204-status code", async () => {
+    const updatedBook = {
+      title: "The Hobbit: An Unexpected Journey",
+      author: "J.R.R. Tolkien",
+    };
+
+    const response = await request(app).put("/api/books/1").send(updatedBook);
+
+    expect(response.status).toEqual(204);
+  });
+
+  test("Should return a 400-status code when using a non-numeric id", async () => {
+    const updatedBook = {
+      title: "The Hobbit",
+      author: "J.R.R. Tolkien",
+    };
+
+    const response = await request(app).put("/api/books/foo").send(updatedBook);
+
+    expect(response.status).toEqual(400);
+    expect(response.body.message).toEqual("Input must be a number");
+  });
+
+  test("Should return a 400-status code when updating a book with a missing title", async () => {
+    const updatedBook = {
+      author: "J.R.R. Tolkien",
+    };
+
+    const response = await request(app).put("/api/books/1").send(updatedBook);
+
+    expect(response.status).toEqual(400);
+    expect(response.body.message).toEqual("Bad Request");
   });
 
   test("Should delete a book", async () => {
