@@ -1,14 +1,13 @@
 /*
   Leslie Espino
- Assignment 6.2 - Manipulating Data in Your Web Service, Part II
-  app.spec.js
+ Assignment 7.2 - Implementing User Authentication
   Tests for the In-N-Out-Books API routes
 */
 
 const request = require("supertest");
 const app = require("../src/app");
 
-describe("Chapter 5: API Tests", () => {
+describe("Chapter 6: API Tests", () => {
   test("Should return an array of books", async () => {
     const response = await request(app).get("/api/books");
 
@@ -106,5 +105,33 @@ describe("Chapter 5: API Tests", () => {
     const response = await request(app).delete("/api/books/1");
 
     expect(response.status).toBe(204);
+  });
+  test("Should log in a user with valid credentials", async () => {
+    const response = await request(app).post("/api/login").send({
+      email: "harry@hogwarts.edu",
+      password: "potter",
+    });
+
+    expect(response.status).toEqual(200);
+    expect(response.body.message).toEqual("Authentication successful");
+  });
+
+  test("Should return 401 when the credentials are incorrect", async () => {
+    const response = await request(app).post("/api/login").send({
+      email: "harry@hogwarts.edu",
+      password: "wrongPassword",
+    });
+
+    expect(response.status).toEqual(401);
+    expect(response.body.message).toEqual("Unauthorized");
+  });
+
+  test("Should return 400 when the email or password is missing", async () => {
+    const response = await request(app).post("/api/login").send({
+      email: "harry@hogwarts.edu",
+    });
+
+    expect(response.status).toEqual(400);
+    expect(response.body.message).toEqual("Bad Request");
   });
 });

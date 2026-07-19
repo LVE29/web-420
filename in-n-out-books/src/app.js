@@ -1,12 +1,14 @@
 /*
   Leslie Espino
-  Assignment 6.2 - Manipulating Data in Your Web Service, Part II
+  Assignment 7.2 - Implementing User Authentication
   In-N-Out-Books JSON Web Service
 */
 
 const express = require("express");
 const createError = require("http-errors");
+const bcrypt = require("bcryptjs");
 const books = require("../database/books");
+const users = require("../database/users");
 
 const app = express();
 
@@ -140,6 +142,35 @@ app.delete("/api/books/:id", async (req, res, next) => {
     res.status(204).send();
   } catch (err) {
     next(err);
+  }
+});
+/*******************************************************
+ * Login must validate both fields before searching so
+ * incomplete requests receive the required 400 response.
+ * bcrypt protects the stored password by comparing hashes
+ * instead of storing or checking a plain-text password.
+ *******************************************************/
+app.post("/api/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return next(createError(400, "Bad Request"));
+    }
+
+    const user = await users.findOne({ email });
+    const passwordIsValid = bcrypt.compareSync(password, user.password);
+
+    if (!passwordIsValid) {
+      return next(createError(401, "Unauthorized"));
+    }
+
+    res.status(200).json({
+      message: "Authentication successful",
+    });
+  } catch (err) {
+    // A missing user is treated like a wrong password so the API does not reveal which emails are registered.
+    next(createError(401, "Unauthorized"));
   }
 });
 
