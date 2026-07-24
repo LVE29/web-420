@@ -1,16 +1,18 @@
 /*
   Leslie Espino
-  Assignment 7.2 - Implementing User Authentication
+  Assignment 8.2 - Enhancing API Security
   In-N-Out-Books JSON Web Service
 */
 
 const express = require("express");
 const createError = require("http-errors");
 const bcrypt = require("bcryptjs");
+const Ajv = require("ajv");
 const books = require("../database/books");
 const users = require("../database/users");
 
 const app = express();
+const ajv = new Ajv();
 
 // These middleware functions allow the API to read incoming request data in JSON or form format.
 app.use(express.json());
@@ -173,6 +175,61 @@ app.post("/api/login", async (req, res, next) => {
     next(createError(401, "Unauthorized"));
   }
 });
+
+/*******************************************************
+ * Security-question requests are validated before any
+ * comparison so malformed or extra data cannot reach the
+ * verification logic. Failed verification uses a general
+ * response to avoid exposing account information.
+ *******************************************************/
+app.post(
+  "/api/users/:email/verify-security-question",
+  async (req, res, next) => {
+    try {
+      const securityQuestionSchema = {
+        type: "array",
+        minItems: 3,
+        maxItems: 3,
+        items: {
+          type: "object",
+          properties: {
+            answer: {
+              type: "string",
+            },
+          },
+          required: ["answer"],
+          additionalProperties: false,
+        },
+      };
+
+      const validate = ajv.compile(securityQuestionSchema);
+
+      if (!validate(req.body)) {
+        return next(createError(400, "Bad Request"));
+      }
+
+      const user = await users.findOne({
+        email: req.params.email,
+      });
+
+      const answersAreCorrect = req.body.every(
+        (securityQuestion, index) =>
+          securityQuestion.answer === user.securityQuestions[index].answer,
+      );
+
+      if (!answersAreCorrect) {
+        return next(createError(401, "Unauthorized"));
+      }
+
+      res.status(200).json({
+        message: "Security questions successfully answered",
+      });
+    } catch (err) {
+      // An unknown email receives the same response as incorrect answers so registered accounts are not exposed.
+      next(createError(401, "Unauthorized"));
+    }
+  },
+);
 
 /*******************************************************
  * Catches requests that do not match a route.

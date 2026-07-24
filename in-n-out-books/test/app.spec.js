@@ -1,6 +1,6 @@
 /*
   Leslie Espino
- Assignment 7.2 - Implementing User Authentication
+ Assignment 8.2 - Enhancing API Security
   Tests for the In-N-Out-Books API routes
 */
 
@@ -133,5 +133,48 @@ describe("Chapter 6: API Tests", () => {
 
     expect(response.status).toEqual(400);
     expect(response.body.message).toEqual("Bad Request");
+  });
+
+  describe("Chapter 7: API Tests", () => {
+    test("Should return 200 when the security questions are correct", async () => {
+      const response = await request(app)
+        .post("/api/users/harry@hogwarts.edu/verify-security-question")
+        .send([
+          { answer: "Hedwig" },
+          { answer: "Quidditch Through the Ages" },
+          { answer: "Evans" },
+        ]);
+
+      expect(response.status).toEqual(200);
+      expect(response.body.message).toEqual(
+        "Security questions successfully answered",
+      );
+    });
+
+    test("Should return 400 when the request body fails validation", async () => {
+      const response = await request(app)
+        .post("/api/users/harry@hogwarts.edu/verify-security-question")
+        .send([
+          { answer: "Hedwig" },
+          { answer: "Quidditch Through the Ages" },
+          {},
+        ]);
+
+      expect(response.status).toEqual(400);
+      expect(response.body.message).toEqual("Bad Request");
+    });
+
+    test("Should return 401 when the security question answers are incorrect", async () => {
+      const response = await request(app)
+        .post("/api/users/harry@hogwarts.edu/verify-security-question")
+        .send([
+          { answer: "Wrong answer" },
+          { answer: "Wrong answer" },
+          { answer: "Wrong answer" },
+        ]);
+
+      expect(response.status).toEqual(401);
+      expect(response.body.message).toEqual("Unauthorized");
+    });
   });
 });
